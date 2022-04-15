@@ -56,7 +56,10 @@ jobs:
           git config --global user.email 'fbihtax@ensarsarajcic.com'
       - name: Push changes
         run: |
-          git add -A
+          FORMS_DIR=forms/$(date +%Y)/$(date +%m)/$(date +%d)
+          mkdir -p $FORMS_DIR
+          cp amsform.pdf $FORMS_DIR/amsform.pdf
+          git add forms
           git commit -m 'Add AMS form [ci]'
           git push
       - uses: actions/github-script@v5
