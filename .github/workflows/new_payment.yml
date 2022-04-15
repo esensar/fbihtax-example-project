@@ -1,0 +1,67 @@
+name: Generate AMS form for latest invoice
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - payments.journal
+
+jobs:
+  generate_ams_form:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install ledger
+        run: sudo apt-get install ledger
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Install fbihtax helper
+        run: |
+          sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/esensar/fbihtax/main/scripts/install.sh)"
+      - name: Run AMS Generation
+        id: generate
+        run: |
+          INVOICE_MONTH=$(date +%Y-%m)
+          INVOICE=$(scripts/generate_latest_invoice)
+          INVOICE_DATE=$(echo $INVOICE | cut -f1 -d " ")
+          INVOICE_PAYEE=$(echo $INVOICE | cut -f2 -d " ")
+          INVOICE_AMOUNT=$(echo $INVOICE | cut -f3 -d " ")
+          CLIENT_NAME=$(jq -r .${INVOICE_PAYEE}.name config/payers_info.json)
+          CLIENT_ADDRESS=$(jq -r .${INVOICE_PAYEE}.address config/payers_info.json)
+          CLIENT_COUNTRY=$(jq -r .${INVOICE_PAYEE}.country config/payers_info.json)
+          echo "
+          {
+            \"name\": \"$CLIENT_NAME\",
+            \"address\": \"$CLIENT_ADDRESS\",
+            \"country\": \"$CLIENT_COUNTRY\"
+          }
+          " > payer_config.json
+          fbihtax --config config/fbihtax_config.json ams --user-config config/user_info.json --client-config payer_config.json --invoice-date $INVOICE_DATE -i ${INVOICE_AMOUNT/,/.} -o amsform.pdf --output-format pdf
+          fbihtax --config config/fbihtax_config.json tax-breakdown -i ${INVOICE_AMOUNT/,/.} -o taxbreakdown.json
+      - uses: actions/upload-artifact@v2
+        with:
+          name: AMS-form
+          path: amsform.pdf
+      - name: Setup git config
+        run: |
+          git config --global user.name 'fbihtax-ci'
+          git config --global user.email 'fbihtax@ensarsarajcic.com'
+      - name: Push changes
+        run: |
+          git add -A
+          git commit -m 'Add AMS form [ci]'
+          git push
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const fs = require('fs')
+            const taxBreakdown = fs.readFileSync('./taxbreakdown.json').toString()
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Pay income tax: ' + new Date().toISOString().slice(0, 7),
+              body: 'Please pay income tax as soon as possible!\n' + taxBreakdown + '\nDownload AMS Form: https://github.com/esensar/fbihtax-example-project/actions/runs/' + context.runId
+            })

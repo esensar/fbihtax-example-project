@@ -1,0 +1,18 @@
+#!/bin/bash
+
+LEDGER_OUTPUT=$(ledger -f payments.journal register Assets:Banking --limit "has_tag(\"taxable\")" --collapse --last 1 --date-format "%Y-%m-%d")
+INVOICE_PAYEE=$(echo $LEDGER_OUTPUT | awk '{print $2}')
+INVOICE_DATE=$(echo $LEDGER_OUTPUT | awk '{print $1}')
+INVOICE_AMOUNT=$(echo $LEDGER_OUTPUT | awk '{gsub("\\.", "", $(NF - 3)); print $(NF - 3)}')
+
+if [[ -z "$INVOICE_DATE" ]]; then
+	echo "An error has occurred. Date is missing" && exit 1
+fi
+if [[ -z "$INVOICE_PAYEE" ]]; then
+	echo "An error has occurred. Payee is missing" && exit 1
+fi
+if [[ -z "$INVOICE_AMOUNT" ]]; then
+	echo "An error has occurred. Amount is missing" && exit 1
+fi
+
+echo "$INVOICE_DATE $INVOICE_PAYEE $INVOICE_AMOUNT"

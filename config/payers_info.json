@@ -1,0 +1,12 @@
+{
+	"Client1": {
+		"name": "Client One",
+		"address": "Client Ones Address",
+		"country": "Client Ones Country"
+	},
+	"Client2": {
+		"name": "Client Two",
+		"address": "Client Twos Address",
+		"country": "Cient Twos Country"
+	}
+}
