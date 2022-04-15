@@ -39,7 +39,8 @@ jobs:
             \"country\": \"$CLIENT_COUNTRY\"
           }
           " > payer_config.json
-          fbihtax --config config/fbihtax_config.json ams --user-config config/user_info.json --client-config payer_config.json --invoice-date $INVOICE_DATE -i ${INVOICE_AMOUNT/,/.} -o amsform.pdf --output-format pdf
+          fbihtax --config config/fbihtax_config.json ams --user-config config/user_info.json --client-config payer_config.json --invoice-date $INVOICE_DATE -i ${INVOICE_AMOUNT/,/.} -o amsform.xfdf --output-format xfdf
+          pdftk tax.pdf fill_form amsform.xfdf output amsform.pdf replacement_font "Ubuntu"
           fbihtax --config config/fbihtax_config.json tax-breakdown -i ${INVOICE_AMOUNT/,/.} -o taxbreakdown.json
       - uses: actions/upload-artifact@v2
         with:
