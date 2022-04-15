@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LEDGER_OUTPUT=$(ledger -f payments.journal register Assets:Banking --limit "has_tag(\"taxable\")" --collapse --last 1 --date-format "%Y-%m-%d")
+LEDGER_OUTPUT=$(ledger -f payments.journal -X KM -H --price-db config/prices.db register Assets:Banking --limit "has_tag(\"taxable\")" --collapse --last 1 --date-format "%Y-%m-%d")
 INVOICE_PAYEE=$(echo $LEDGER_OUTPUT | awk '{print $2}')
 INVOICE_DATE=$(echo $LEDGER_OUTPUT | awk '{print $1}')
 INVOICE_AMOUNT=$(echo $LEDGER_OUTPUT | awk '{gsub("\\.", "", $(NF - 3)); print $(NF - 3)}')

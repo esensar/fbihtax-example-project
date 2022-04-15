@@ -1,0 +1,33 @@
+name: Fetch CBBH USD prices
+
+on:
+  # Uncomment this to enable automatic USD to BAM conversion updates
+  # Every day at 16h UTC (since DB is updated at 16h Bosnian time - meaning it should be ready 100%)
+  # schedule:
+    # - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch_prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Run generation script
+        id: generate
+        run: |
+          scripts/update_cbbih_prices_db
+          printf '::set-output name=UPDATED::%s\n' $([ -z "$(git diff)" ]; echo $?)
+      - name: Setup git config
+        if: ${{steps.generate.outputs.UPDATED != 0}}
+        run: |
+          git config --global user.name 'fbihtax-cbbh-ci'
+          git config --global user.email 'fbihtax@ensarsarajcic.com'
+      - name: Push changes
+        if: ${{steps.generate.outputs.UPDATED != 0}}
+        run: |
+          git add -A
+          git commit -m 'CBBH prices updated [ci]'
+          git push

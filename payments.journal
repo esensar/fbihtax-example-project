@@ -1,9 +1,14 @@
 2022-04-10 * Client1
 	; :taxable:
-	Assets:Banking  1000,00 KM
+	Assets:Banking                                       1000,00 KM
 	Income:Salary
 
 2022-04-15 * Client2
 	; :taxable:
-	Assets:Banking  1000,00 KM
+	Assets:Banking                                       1000,00 KM
+	Income:Salary
+
+2022-04-16 * Client2
+	; :taxable:
+	Assets:Banking                                      $1000,00
 	Income:Salary

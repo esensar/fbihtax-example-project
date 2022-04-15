@@ -1,0 +1,18 @@
+#!/bin/sh
+
+CBBH_USD_CURRENCY_ID=46
+YEAR=$(date +%Y)
+MONTH=$(date +%m)
+CBBH_RESPONSE_FILE=$(mktemp)
+
+# Download latest CBBH currency report
+curl "https://www.cbbh.ba/CurrencyExchange/GetMonthlyReportOfCurrency?currencyId=$CBBH_USD_CURRENCY_ID&year=$YEAR&month=$MONTH" > $CBBH_RESPONSE_FILE
+
+# Parse prices into prices db file
+jq -r '[.Dates, .Values] | transpose | map_values(map_values(tostring)) | map_values("P " + .[0] + " 00:00:00 $ " + .[1] + " KM") | .[]' $CBBH_RESPONSE_FILE | sed "s/\([[:digit:]]*\)\.\([[:digit:]]*\)\./$YEAR-\2-\1/" >> config/prices.db
+
+# Sort and remove duplicates from prices db
+# Temporary files are used due to issues when using sort inplace (producing empty output)
+SORT_TEMP=$(mktemp)
+sort config/prices.db -o $SORT_TEMP
+uniq $SORT_TEMP config/prices.db
