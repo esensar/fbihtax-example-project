@@ -1,10 +1,9 @@
 name: Fetch CBBH USD prices
 
 on:
-  # Uncomment this to enable automatic USD to BAM conversion updates
   # Every day at 16h UTC (since DB is updated at 16h Bosnian time - meaning it should be ready 100%)
-  # schedule:
-    # - cron: '0 16 * * *'
+  schedule:
+    - cron: '0 16 * * *'
   workflow_dispatch:
 
 jobs:
