@@ -23,6 +23,7 @@ jobs:
           sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/esensar/fbihtax/main/scripts/install.sh)"
       - name: Download Ubuntu font for PDF
         run: |
+          # It is also possible to use some of the available fonts like Noto Sans
           wget -O ubuntu.zip https://fonts.google.com/download?family=Ubuntu
           unzip ubuntu.zip
       - name: Run AMS Generation
@@ -44,6 +45,7 @@ jobs:
           }
           " > payer_config.json
           fbihtax --config config/fbihtax_config.json ams --user-config config/user_info.json --client-config payer_config.json --invoice-date $INVOICE_DATE -i ${INVOICE_AMOUNT/,/.} -o amsform.xfdf --output-format xfdf
+          # Can also use `replacement_font "Noto Sans"` if downloading font is not desired
           pdftk tax.pdf fill_form amsform.xfdf output amsform.pdf replacement_font ./Ubuntu-Regular.ttf
           fbihtax --config config/fbihtax_config.json tax-breakdown -i ${INVOICE_AMOUNT/,/.} -o taxbreakdown.json
       - uses: actions/upload-artifact@v2
