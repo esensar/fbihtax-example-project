@@ -1,0 +1,56 @@
+name: Generate GPD form for previous year
+
+on:
+  schedule:
+    - cron: '0 12 1 3 *'
+  workflow_dispatch:
+
+jobs:
+  generate_gpd_form:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Install fbihtax helper
+        run: |
+          sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/esensar/fbihtax/main/scripts/install.sh)"
+      - name: Download Ubuntu font for PDF
+        run: |
+          # It is also possible to use some of the available fonts like DejaVu Sans
+          wget -O ubuntu.zip https://fonts.google.com/download?family=Ubuntu
+          unzip ubuntu.zip
+      - name: Run GPD Generation
+        id: generate
+        run: |
+          YEAR=$(date -d "last year" +%Y)
+          fbihtax --config config/fbihtax_config.json gpd --user-config config/user_info.json --year $YEAR -o gpdform.xfdf --output-format xfdf
+          # Can also use `replacement_font "DejaVu Sans"` if downloading font is not desired
+          pdftk gpdcache.pdf fill_form gpdform.xfdf output gpdform.pdf replacement_font ./Ubuntu-Regular.ttf
+      - uses: actions/upload-artifact@v2
+        with:
+          name: GPD-form
+          path: gpdform.pdf
+      - name: Setup git config
+        run: |
+          git config --global user.name 'fbihtax-ci'
+          git config --global user.email 'fbihtax@ensarsarajcic.com'
+      - name: Push changes
+        run: |
+          FORMS_DIR=forms/$(date -d "last year" +%Y)
+          mkdir -p $FORMS_DIR
+          cp gpdform.pdf $FORMS_DIR/gpdform.pdf
+          git add forms
+          git commit -m 'Add GPD form [ci]'
+          git push
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const fs = require('fs')
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'GPD form generated: ' + new Date().toISOString().slice(0, 7),
+              body: 'Check if form needs to be submitted.' + taxBreakdown + '\nDownload GPD Form: https://github.com/esensar/fbihtax-example-project/actions/runs/' + context.runId
+            })

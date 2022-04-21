@@ -46,7 +46,7 @@ jobs:
           " > payer_config.json
           fbihtax --config config/fbihtax_config.json ams --user-config config/user_info.json --client-config payer_config.json --invoice-date $INVOICE_DATE -i ${INVOICE_AMOUNT/,/.} -o amsform.xfdf --output-format xfdf
           # Can also use `replacement_font "DejaVu Sans"` if downloading font is not desired
-          pdftk tax.pdf fill_form amsform.xfdf output amsform.pdf replacement_font ./Ubuntu-Regular.ttf
+          pdftk amscache.pdf fill_form amsform.xfdf output amsform.pdf replacement_font ./Ubuntu-Regular.ttf
           fbihtax --config config/fbihtax_config.json tax-breakdown -i ${INVOICE_AMOUNT/,/.} -o taxbreakdown.json
       - uses: actions/upload-artifact@v2
         with:
@@ -62,6 +62,7 @@ jobs:
           mkdir -p $FORMS_DIR
           cp amsform.pdf $FORMS_DIR/amsform.pdf
           git add forms
+          git add fbihtax.db.json
           git commit -m 'Add AMS form [ci]'
           git push
       - uses: actions/github-script@v5
